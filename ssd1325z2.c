@@ -146,7 +146,7 @@ static GDL_Errors SSD1325Z2_setBufferPosition (SSD1325Z2_DeviceHandle dev,
 void SSD1325Z2_init (SSD1325Z2_DeviceHandle dev)
 {
     // Set the device model
-    dev->gdl.model = GDL_MODELTYPE_SSD1325Z2;
+    dev->gdl.model = GDL_MODELTYPE_SSD1325;
 
     // Save display size
     dev->gdl.height = WARCOMEB_SSD1325Z2_HEIGHT;
@@ -224,9 +224,9 @@ GDL_Errors SSD1325Z2_drawPixel (SSD1325Z2_DeviceHandle dev,
     uint16_t pos = ((uint16_t) xPos/2) + ((uint16_t) yPos*(dev->gdl.width/2));
 
     if (xPos%2)
-        dev->buffer[pos] = (((color << 4) & 0xF0) | (dev->buffer[pos] & 0x0F));
-    else
         dev->buffer[pos] = ((color & 0x0F) | (dev->buffer[pos] & 0xF0));
+    else
+        dev->buffer[pos] = (((color << 4) & 0xF0) | (dev->buffer[pos] & 0x0F));
 
     return GDL_ERRORS_OK;
 }
@@ -327,7 +327,7 @@ GDL_Errors SSD1325Z2_drawChar (SSD1325Z2_DeviceHandle dev,
 GDL_Errors SSD1325Z2_drawString (SSD1325Z2_DeviceHandle dev,
                                  uint16_t xPos,
                                  uint16_t yPos,
-                                 uint8_t* text,
+                                 const uint8_t* text,
                                  SSD1325Z2_GrayScale color,
                                  SSD1325Z2_GrayScale background,
                                  uint8_t size)
@@ -337,10 +337,24 @@ GDL_Errors SSD1325Z2_drawString (SSD1325Z2_DeviceHandle dev,
 
     for (uint8_t i=0; text[i] != '\n' && text[i] != '\0'; i++)
     {
-        error = SSD1325Z2_drawChar(dev,(xPos + charWidth),yPos,text[i],color,background,size);
+        error = SSD1325Z2_drawChar(dev,(xPos + charWidth * i),yPos,text[i],color,background,size);
         if (error != GDL_ERRORS_OK) return error;
     }
     return GDL_ERRORS_OK;
+}
+
+GDL_Errors SSD1325Z2_drawPicture (SSD1325Z2_DeviceHandle dev,
+                                  uint16_t xPos,
+                                  uint16_t yPos,
+                                  uint16_t width,
+                                  uint16_t height,
+                                  const uint8_t* picture,
+                                  GDL_PictureType pixelType)
+{
+    if ((pixelType != GDL_PICTURETYPE_1BIT) && (pixelType != GDL_PICTURETYPE_4BIT))
+        return GDL_ERRORS_WRONG_VALUE;
+
+    return GDL_drawPicture(&(dev->gdl),xPos,yPos,width,height,picture,pixelType);
 }
 
 void SSD1325Z2_displayOn (SSD1325Z2_DeviceHandle dev)
